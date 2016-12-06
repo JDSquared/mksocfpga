@@ -538,7 +538,7 @@ begin
         end if;
     end process update_state;
 
-    calc_state : process(current_state, prev_state, pp_buf_change, timed_out, cons_timeouts, reg_control_lower, pkt_tx_we_s, pp_data, pp_data, sync_pulse)
+    calc_state : process(current_state, prev_state, pp_buf_change, timed_out, cons_timeouts, reg_control_lower, pkt_tx_we_s, pp_data, sync_pulse)
     begin
         next_state <= current_state; -- Hold state by default
         new_prev_state <= prev_state;
