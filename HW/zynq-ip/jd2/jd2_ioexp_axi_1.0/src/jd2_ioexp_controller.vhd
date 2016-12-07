@@ -166,7 +166,7 @@ begin
     begin
         case current_state is
             when send_qry_data =>
-                pkt_tx_data <= PKT_SETQRY_DATA_CMD & reg_outs(15 downto 0) & PKT_PAD_B;
+                pkt_tx_data <= PKT_SETQRY_DATA_CMD & reg_outs(7 downto 0) & reg_outs(15 downto 8) & PKT_PAD_B;
             when others =>
                 pkt_tx_data <= (others => '0');
         end case;
