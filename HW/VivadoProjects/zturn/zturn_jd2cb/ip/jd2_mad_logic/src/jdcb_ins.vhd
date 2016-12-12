@@ -79,7 +79,9 @@ entity jdcb_ins is
 end jdcb_ins;
 
 architecture arch_imp of jdcb_ins is
-    signal sw_probe_deb : std_logic;
+    signal sw_probe_deb, el_probe_deb : std_logic;
+    signal sw_probe_latch, el_probe_latch : std_logic;
+    signal el_probe_cs : std_logic;
     signal aux1_in_deb : std_logic;
     signal lim_deb : std_logic_vector(3 downto 0);
     signal deb_clk : std_logic := '0';
@@ -100,19 +102,30 @@ begin
     LOG_INS(16) <= faults_valid AND (NOT(INS(4)) OR NOT(INS(8))); -- M2 & M3 motors combined fault signal, fault when high
     LOG_INS(20 downto 17) <= NOT(lim_deb(3 downto 0));
     LOG_INS(23 downto 21) <= INS(23 downto 21); -- Generic outputs not touched
-    LOG_INS(24) <= NOT(INS(24));  -- Z-probe input is not debounced, but inverted
     LOG_INS(25) <= NOT(aux1_in_deb);  -- AUXIN1 gets debounced, and inverted
     LOG_INS(26) <= NOT(sw_probe_deb); -- debounce switch z probe
     LOG_INS(27) <= NOT(INS(27));  -- E-Stop input is not debounced, but inverted
     LOG_INS(28) <= NOT(INS(28));  -- Torch Break input is not debounced, but inverted
     LOG_INS(29) <= NOT(INS(27)) OR (NOT(INS(28)) AND NOT(INS(30)));  -- Logical E-Stop
-    LOG_INS(30) <= INS(30) AND INS(16) AND INS(29) AND INS(31);
-    LOG_INS(31) <= NOT(INS(24)) OR NOT(sw_probe_deb); -- combined z-probe signal
+    LOG_INS(30) <= INS(30) AND INS(16) AND INS(29) AND INS(31); 
     LOG_INS(32) <= faults_valid AND (NOT(INS(32))); -- motor 5 fault is delayed and inverted
     LOG_INS(35 downto 33) <= INS(35 downto 33);  
 
     faults_valid <= (mtr_pwr_del AND INS(22)); -- don't delay when turning off power
-
+    el_probe_cs <= (el_probe_deb AND (NOT(INS(34)))); -- turn off eprobe when overridden
+   
+    -- Probes are inverted before debouncer
+    platch : entity work.probe_latch
+            port map (
+                clk => clk,
+                arm_latch => INS(33),
+                sw_probe_in => sw_probe_deb,
+                el_probe_in => el_probe_cs,
+                el_probe_out => LOG_INS(24),
+                sw_probe_out => LOG_INS(26),
+                probe_out => LOG_INS(31)  -- combined z-probe signal             
+            );
+   
     gen_lim : for i in 0 to 3 generate
         limx: entity work.inp_deb
         generic map (NUM_STAGES => NUM_DEB_STAGES)
@@ -127,8 +140,16 @@ begin
         generic map (NUM_STAGES => NUM_DEB_STAGES)
         port map (
             clk => deb_clk,
-            input => INS(26),
+            input => NOT(INS(26)),
             output => sw_probe_deb
+        );
+        
+    el_pr: entity work.inp_deb
+        generic map (NUM_STAGES => NUM_DEB_STAGES)
+        port map (
+            clk => deb_clk,
+            input => NOT(INS(24)),
+            output => el_probe_deb
         );
 
     ax2_deb: entity work.inp_deb
@@ -154,7 +175,7 @@ begin
     clkdiv : process (clk, timer_cnt)
     begin
         if rising_edge(clk) then
-            if timer_cnt <= x"0001" then
+            if (timer_cnt = x"0001") then
                 timer_cnt <= half_period;
                 deb_clk <= NOT(deb_clk);
             else
