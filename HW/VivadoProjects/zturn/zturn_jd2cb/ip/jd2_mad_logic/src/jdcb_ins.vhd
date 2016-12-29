@@ -68,7 +68,7 @@ use ieee.numeric_std.all;
 
 entity jdcb_ins is
 	generic (
-		WIDTH	: integer	:= 36;
+		WIDTH	: integer	:= 40;
 		NUM_DEB_STAGES : integer := 10 -- Number of stages of debounce before output is latched
 	);
 	port (
@@ -102,29 +102,19 @@ begin
     LOG_INS(16) <= faults_valid AND (NOT(INS(4)) OR NOT(INS(8))); -- M2 & M3 motors combined fault signal, fault when high
     LOG_INS(20 downto 17) <= NOT(lim_deb(3 downto 0));
     LOG_INS(23 downto 21) <= INS(23 downto 21); -- Generic outputs not touched
+	LOG_INS(24) <= el_probe_deb;
+	LOG_INS(26) <= sw_probe_deb;
     LOG_INS(25) <= NOT(aux1_in_deb);  -- AUXIN1 gets debounced, and inverted
-    LOG_INS(26) <= NOT(sw_probe_deb); -- debounce switch z probe
     LOG_INS(27) <= NOT(INS(27));  -- E-Stop input is not debounced, but inverted
     LOG_INS(28) <= NOT(INS(28));  -- Torch Break input is not debounced, but inverted
     LOG_INS(29) <= NOT(INS(27)) OR (NOT(INS(28)) AND NOT(INS(30)));  -- Logical E-Stop
     LOG_INS(30) <= INS(30) AND INS(16) AND INS(29) AND INS(31); 
+	LOG_INS(31) <= sw_probe_deb OR el_probe_cs;
     LOG_INS(32) <= faults_valid AND (NOT(INS(32))); -- motor 5 fault is delayed and inverted
-    LOG_INS(35 downto 33) <= INS(35 downto 33);  
+    LOG_INS(39 downto 33) <= INS(39 downto 33);  
 
     faults_valid <= (mtr_pwr_del AND INS(22)); -- don't delay when turning off power
-    el_probe_cs <= (el_probe_deb AND (NOT(INS(34)))); -- turn off eprobe when overridden
-   
-    -- Probes are inverted before debouncer
-    platch : entity work.probe_latch
-            port map (
-                clk => clk,
-                arm_latch => INS(33),
-                sw_probe_in => sw_probe_deb,
-                el_probe_in => el_probe_cs,
-                el_probe_out => LOG_INS(24),
-                sw_probe_out => LOG_INS(26),
-                probe_out => LOG_INS(31)  -- combined z-probe signal             
-            );
+    el_probe_cs <= (el_probe_deb AND (NOT(INS(37)))); -- block eprobe when overridden
    
     gen_lim : for i in 0 to 3 generate
         limx: entity work.inp_deb

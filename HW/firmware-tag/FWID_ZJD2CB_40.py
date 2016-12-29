@@ -14,11 +14,11 @@ def gen_fwid(*args,**kwargs):
 
     c = fw.connector.add()
     c.name = "GPIO0.P1"
-    c.pins = 18
+    c.pins = 20
 
     c = fw.connector.add()
     c.name = "GPIO0.P2"
-    c.pins = 18
+    c.pins = 20
 
     return fw
     

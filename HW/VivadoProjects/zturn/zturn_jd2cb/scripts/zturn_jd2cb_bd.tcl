@@ -104,7 +104,7 @@ proc create_root_design { parentCell } {
   set FIXED_IO [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:fixedio_rtl:1.0 FIXED_IO ]
 
   # Create ports
-  set IOBits [ create_bd_port -dir IO -from 35 -to 0 IOBits ]
+  set IOBits [ create_bd_port -dir IO -from 39 -to 0 IOBits ]
   set uart0_rxd [ create_bd_port -dir I -type data uart0_rxd ]
   set uart0_txd [ create_bd_port -dir O -type data uart0_txd ]
   set uart1_rxd [ create_bd_port -dir I uart1_rxd ]
@@ -113,7 +113,8 @@ proc create_root_design { parentCell } {
   # Create instance: HostMot2_ip_wrap_0, and set properties
   set HostMot2_ip_wrap_0 [ create_bd_cell -type ip -vlnv machinekit.io:user:HostMot2_ip_wrap:1.0 HostMot2_ip_wrap_0 ]
   set_property -dict [ list \
-CONFIG.IOWidth {36} \
+CONFIG.IOWidth {40} \
+CONFIG.PortWidth {20} \
  ] $HostMot2_ip_wrap_0
 
   # Create instance: btint_axi_0, and set properties
@@ -124,12 +125,18 @@ CONFIG.IOWidth {36} \
 
   # Create instance: hm2_io_ts_0, and set properties
   set hm2_io_ts_0 [ create_bd_cell -type ip -vlnv machinekit.io:user:hm2_io_ts:1 hm2_io_ts_0 ]
+  set_property -dict [ list \
+CONFIG.WIDTH {40} \
+ ] $hm2_io_ts_0
 
   # Create instance: jd2_ioexp_axi_0, and set properties
   set jd2_ioexp_axi_0 [ create_bd_cell -type ip -vlnv jd2.com:user:jd2_ioexp_axi:1.0 jd2_ioexp_axi_0 ]
 
   # Create instance: jd2_mad_logic_0, and set properties
   set jd2_mad_logic_0 [ create_bd_cell -type ip -vlnv jd2.com:user:jd2_mad_logic:1 jd2_mad_logic_0 ]
+  set_property -dict [ list \
+CONFIG.WIDTH {40} \
+ ] $jd2_mad_logic_0
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
@@ -269,8 +276,8 @@ preplace port FIXED_IO -pg 1 -y 730 -defaultsOSRD
 preplace port uart0_txd -pg 1 -y 630 -defaultsOSRD
 preplace portBus IOBits -pg 1 -y 250 -defaultsOSRD
 preplace inst rst_processing_system7_0_100M -pg 1 -lvl 4 -y 430 -defaultsOSRD
-preplace inst jd2_ioexp_axi_0 -pg 1 -lvl 6 -y 450 -defaultsOSRD
 preplace inst jd2_mad_logic_0 -pg 1 -lvl 1 -y 220 -defaultsOSRD
+preplace inst jd2_ioexp_axi_0 -pg 1 -lvl 6 -y 450 -defaultsOSRD
 preplace inst xlconcat_0 -pg 1 -lvl 3 -y 100 -defaultsOSRD
 preplace inst hm2_io_ts_0 -pg 1 -lvl 6 -y 240 -defaultsOSRD
 preplace inst hm2_axilite_int_0 -pg 1 -lvl 6 -y 90 -defaultsOSRD
@@ -278,35 +285,35 @@ preplace inst btint_axi_0 -pg 1 -lvl 6 -y 630 -defaultsOSRD
 preplace inst HostMot2_ip_wrap_0 -pg 1 -lvl 2 -y 150 -defaultsOSRD
 preplace inst processing_system7_0_axi_periph -pg 1 -lvl 5 -y 490 -defaultsOSRD
 preplace inst processing_system7_0 -pg 1 -lvl 4 -y 740 -defaultsOSRD
-preplace netloc uart0_rxd_1 1 5 2 1550 720 NJ
+preplace netloc uart0_rxd_1 1 5 2 1590 720 NJ
 preplace netloc btint_axi_0_UART_TX 1 6 1 NJ
 preplace netloc processing_system7_0_axi_periph_M00_AXI 1 5 1 1500
 preplace netloc HostMot2_ip_wrap_0_interrupt 1 2 1 NJ
-preplace netloc processing_system7_0_M_AXI_GP0 1 4 1 1150
-preplace netloc processing_system7_0_FCLK_RESET0_N 1 3 2 720 600 1120
-preplace netloc hm2_io_ts_0_i_bits 1 0 7 20 330 NJ 330 NJ 330 NJ 330 NJ 330 NJ 330 1790
-preplace netloc HostMot2_ip_wrap_0_ioddrbits 1 2 4 NJ 160 NJ 160 NJ 160 1540
-preplace netloc uart1_rxd_1 1 5 2 1540 360 NJ
+preplace netloc processing_system7_0_M_AXI_GP0 1 4 1 1190
+preplace netloc processing_system7_0_FCLK_RESET0_N 1 3 2 740 290 1150
+preplace netloc hm2_io_ts_0_i_bits 1 0 7 20 330 NJ 330 NJ 330 NJ 330 NJ 330 NJ 340 1830
+preplace netloc HostMot2_ip_wrap_0_ioddrbits 1 2 4 NJ 160 NJ 160 NJ 160 1590
+preplace netloc uart1_rxd_1 1 5 2 1590 360 NJ
 preplace netloc jd2_mad_logic_0_LOG_INS 1 1 1 N
-preplace netloc processing_system7_0_axi_periph_M02_AXI 1 5 1 1530
-preplace netloc rst_processing_system7_0_100M_peripheral_aresetn 1 4 2 1180 660 1520
-preplace netloc HostMot2_ip_wrap_0_outbits 1 2 4 NJ 150 NJ 150 NJ 150 1530
-preplace netloc xlconcat_0_dout 1 3 3 710 590 NJ 670 1540
-preplace netloc hm2_axilite_int_0_WRITESTB 1 1 6 260 320 NJ 320 NJ 320 NJ 320 NJ 320 1800
-preplace netloc hm2_axilite_int_0_READSTB 1 1 6 250 310 NJ 310 NJ 310 NJ 310 NJ 310 1810
-preplace netloc HostMot2_ip_wrap_0_obus 1 2 4 520 50 NJ 50 NJ 50 NJ
-preplace netloc hm2_axilite_int_0_IBUS 1 1 6 270 290 NJ 290 NJ 190 NJ 190 NJ 170 1820
+preplace netloc processing_system7_0_axi_periph_M02_AXI 1 5 1 1520
+preplace netloc rst_processing_system7_0_100M_peripheral_aresetn 1 4 2 1200 660 1540
+preplace netloc HostMot2_ip_wrap_0_outbits 1 2 4 NJ 150 NJ 150 NJ 150 1580
+preplace netloc xlconcat_0_dout 1 3 3 710 600 NJ 670 1580
+preplace netloc hm2_axilite_int_0_WRITESTB 1 1 6 290 290 NJ 280 NJ 280 NJ 280 NJ 330 1840
+preplace netloc hm2_axilite_int_0_READSTB 1 1 6 260 10 NJ 10 NJ 10 NJ 10 NJ 10 1870
+preplace netloc HostMot2_ip_wrap_0_obus 1 2 4 530 50 NJ 50 NJ 50 NJ
+preplace netloc hm2_axilite_int_0_IBUS 1 1 6 250 310 NJ 310 NJ 310 NJ 310 NJ 320 1850
 preplace netloc processing_system7_1_DDR 1 4 3 NJ 650 NJ 540 NJ
-preplace netloc rst_processing_system7_0_100M_interconnect_aresetn 1 4 1 1160
-preplace netloc processing_system7_0_FCLK_CLK0 1 0 6 20 160 240 340 NJ 340 700 520 1170 690 1510
-preplace netloc hm2_axilite_int_0_ADDR 1 1 6 240 10 NJ 10 NJ 10 NJ 10 NJ 10 1820
+preplace netloc rst_processing_system7_0_100M_interconnect_aresetn 1 4 1 1170
+preplace netloc processing_system7_0_FCLK_CLK0 1 0 6 20 160 240 320 NJ 320 730 300 1180 300 1560
+preplace netloc hm2_axilite_int_0_ADDR 1 1 6 270 300 NJ 300 NJ 270 NJ 270 NJ 310 1860
 preplace netloc Net 1 6 1 NJ
-preplace netloc HostMot2_ip_wrap_0_ioodrbits 1 2 4 NJ 180 NJ 180 NJ 180 1500
+preplace netloc HostMot2_ip_wrap_0_ioodrbits 1 2 4 NJ 180 NJ 180 NJ 180 1570
 preplace netloc processing_system7_1_FIXED_IO 1 4 3 NJ 680 NJ 730 NJ
-preplace netloc processing_system7_0_FCLK_CLK1 1 1 4 280 300 NJ 300 NJ 300 1130
-preplace netloc processing_system7_0_axi_periph_M01_AXI 1 5 1 1480
+preplace netloc processing_system7_0_FCLK_CLK1 1 1 4 280 340 NJ 340 NJ 340 1140
+preplace netloc processing_system7_0_axi_periph_M01_AXI 1 5 1 1510
 preplace netloc jd2_ioexp_axi_0_UART_TX 1 6 1 NJ
-levelinfo -pg 1 0 130 400 610 920 1330 1670 1840 -top 0 -bot 880
+levelinfo -pg 1 0 130 410 620 940 1350 1710 1890 -top 0 -bot 880
 ",
 }
 

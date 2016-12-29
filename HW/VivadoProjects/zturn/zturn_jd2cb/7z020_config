@@ -25,11 +25,11 @@ TOP_LEVEL_BD_FILE=scripts/zturn_jd2cb_bd.tcl
 #  belong in an xdc file above
 
 # HM2 Pin Filename relative to project folder
-PIN_FILE=const/PIN_ZJD2CB_36.vhd
+PIN_FILE=const/PIN_ZJD2CB_40.vhd
 # Pin package name defined in above pin file
-PIN_NAME=PIN_ZJD2CB_36
+PIN_NAME=PIN_ZJD2CB_40
 #FWID File name in the const folder
-FWID_NAME=FWID_ZJD2CB_36
+FWID_NAME=FWID_ZJD2CB_40
 
 ############################################################################
 # HostMot2 Generic Parameters, autofills IP correctly without regenerating

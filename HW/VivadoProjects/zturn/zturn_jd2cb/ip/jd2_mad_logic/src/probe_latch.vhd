@@ -71,38 +71,67 @@ entity probe_latch is
 	    clk : in std_logic;
 	    arm_latch : in std_logic;
 	    sw_probe_in, el_probe_in : in std_logic; -- Raw Probe Inputs
+		el_probe_over : in std_logic;
         el_probe_out, sw_probe_out, probe_out : out std_logic -- Logic Applied Probe Inputs
 	);
 end probe_latch;
 
 architecture arch_imp of probe_latch is
-	type sm_type is (start, idle, armed, wait_for_sw, wait_for_el, wait_for_clear);
+	type sm_type is (start, idle, armed, wait_for_clear);
 	signal current_state, next_state : sm_type := start;
     signal sw_probe_deb, el_probe_deb : std_logic;
     signal sw_probe_latch, el_probe_latch : std_logic;
     signal latched : std_logic;
 begin    
     probe_out <= sw_probe_latch OR el_probe_latch;  
-    el_probe_out <= el_probe_latch;
-    sw_probe_latch <= sw_probe_latch;
+    el_probe_out <= (el_probe_latch AND (NOT(el_probe_over)));
+    sw_probe_out <= sw_probe_latch;
     
-    latched <= '1' when (current_state = armed AND
-                        ((el_probe_latch /= el_probe_in) OR
-                         (sw_probe_latch /= sw_probe_in)) else '0';
-    
-    latch_changed : process(clk, current state)
+    calc_latch : process(current_state, el_probe_latch, el_probe_in, sw_probe_latch, sw_probe_in)
+	begin
+		-- default off
+		latched <= '0';
+		if(current_state = armed) then
+			if (el_probe_latch = '0' and sw_probe_latch = '0') then                
+				-- el probe has preference
+	            if (el_probe_in = '1' or sw_probe_in = '1') then
+	                latched <= '1';
+				end if;
+			elsif(el_probe_latch = '1') then
+				if(el_probe_in =  '0') then
+					latched <= '1';
+				end if;
+			elsif(sw_probe_latch = '1') then
+				if(sw_probe_in = '0') then
+					latched <= '1';
+				end if;
+			end if;
+        end if;
+	end process;
+
+    latch_changed : process(clk, current_state, el_probe_latch, el_probe_in, sw_probe_latch, sw_probe_in)
     begin
         if (rising_edge(clk)) then
             if(current_state = start) then
                 el_probe_latch <= el_probe_in;
                 sw_probe_latch <= sw_probe_in;
             elsif (current_state = armed) then 
-                -- el probe has preference
-                if (el_probe_in /=  el_probe_latch) then
-                    el_probe_latch <= el_probe_in;
-                if (sw_probe_in /= sw_probe_latch) then
-                    sw_probe_latch <= sw_probe_in;
-                end if;
+				if (el_probe_latch = '0' and sw_probe_latch = '0') then                
+					-- el probe has preference
+		            if (el_probe_in = '1') then
+		                el_probe_latch <= el_probe_in;
+		            elsif (sw_probe_in = '1') then
+		                sw_probe_latch <= sw_probe_in;
+		            end if;
+				elsif(el_probe_latch = '1') then
+					if(el_probe_in = '0') then
+						el_probe_latch <= el_probe_in;
+					end if;
+				elsif(sw_probe_latch = '1') then
+					if(sw_probe_in = '0') then
+						sw_probe_latch <= sw_probe_in;
+					end if;
+				end if;
             end if;
         end if;
     end process;
@@ -114,7 +143,7 @@ begin
         end if;
     end process update_state;
 
-    calc_state : process(current_state, armed, latched)
+    calc_state : process(current_state, arm_latch, latched)
     begin
         -- default to hold state
         next_state <= current_state;
@@ -123,18 +152,18 @@ begin
                 -- read the default state of the pins
                 next_state <= idle;
             when idle =>
-                if(armed = '1') then
+                if(arm_latch = '1') then
                     -- Arm the probe
                     next_state <= armed;
                 end if;
             when armed =>
                 if(latched = '1') then
-                    next_state <= latched;
-                elsif(armed = '0') then
+                    next_state <= wait_for_clear;
+                elsif(arm_latch = '0') then
                     next_state <= idle;
                 end if;
-            when latched =>
-                if(armed = '0') then
+            when wait_for_clear =>
+                if(arm_latch = '0') then
                     next_state <= idle;
                 end if;  
             when others => next_state <= idle;

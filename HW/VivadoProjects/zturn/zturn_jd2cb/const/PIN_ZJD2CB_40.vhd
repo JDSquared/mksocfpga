@@ -71,13 +71,13 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 use work.IDROMConst.all;
 
-package PIN_ZJD2CB_36 is
+package PIN_ZJD2CB_40 is
 	constant ModuleID : ModuleIDType :=(
-    (HM2DPLLTag,	x"00",	ClockLowTag,	    x"01",	HM2DPLLBaseRateAddr&PadT,	    HM2DPLLNumRegs,		    x"00",	HM2DPLLMPBitMask),
-		(WatchDogTag,	x"00",	ClockLowTag,	    x"01",	WatchDogTimeAddr&PadT,		    WatchDogNumRegs,			x"00",	WatchDogMPBitMask),
-		(IOPortTag,		x"00",	ClockLowTag,	    x"02",	PortAddr&PadT,								IOPortNumRegs,				x"00",	IOPortMPBitMask),
-		(StepGenTag,	x"02",	ClockLowTag,	    x"05",	StepGenRateAddr&PadT,					StepGenNumRegs,		    x"00",	StepGenMPBitMask),
-		(FWIDTag,     x"00",  ClockLowTag,    	x"01",  FWIDAddr&PadT,        				FWIDNumRegs,          x"00",  FWIDMPBitMask),
+    (HM2DPLLTag,		x"00",	ClockLowTag,    	x"01",	HM2DPLLBaseRateAddr&PadT,	    HM2DPLLNumRegs,		    x"00",	HM2DPLLMPBitMask),
+		(WatchDogTag,	x"00",	ClockLowTag,	    x"01",	WatchDogTimeAddr&PadT,			WatchDogNumRegs,		x"00",	WatchDogMPBitMask),
+		(IOPortTag,		x"00",	ClockLowTag,	    x"02",	PortAddr&PadT,				    IOPortNumRegs,			x"00",	IOPortMPBitMask),
+		(StepGenTag,	x"02",	ClockLowTag,	    x"05",	StepGenRateAddr&PadT,		    StepGenNumRegs,		   	x"00",	StepGenMPBitMask),
+		(FWIDTag,     	x"00",  ClockLowTag,   		x"01",  FWIDAddr&PadT,        			FWIDNumRegs,            x"00",  FWIDMPBitMask),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
 		(NullTag,		x"00",	NullTag,			x"00",	NullAddr&PadT,					x"00",					x"00",	x"00000000"),
@@ -155,8 +155,13 @@ package PIN_ZJD2CB_36 is
         IOPortTag & x"04" & StepGenTag & StepGenDirPin,         -- I/O 34   PIN 84 M5-DIR
         IOPortTag & x"00" & NullTag & NullPin,                  -- I/O 35   PIN 82 M5-EN GPIO
 
-        emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for 34 pin 5I25
-		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
+		IOPortTag & x"00" & NullTag & NullPin,                  -- I/O 36   PIN X GPIO
+		IOPortTag & x"00" & NullTag & NullPin,                  -- I/O 37   PIN X GPIO
+		IOPortTag & x"00" & NullTag & NullPin,                  -- I/O 38   PIN X GPIO
+		IOPortTag & x"00" & NullTag & NullPin,                  -- I/O 39   PIN X GPIO
+
+
+        emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 
 
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin, -- added for IDROM v3
@@ -173,4 +178,4 @@ package PIN_ZJD2CB_36 is
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,
 		emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin,emptypin);
 
-end package PIN_ZJD2CB_36;
+end package PIN_ZJD2CB_40;
