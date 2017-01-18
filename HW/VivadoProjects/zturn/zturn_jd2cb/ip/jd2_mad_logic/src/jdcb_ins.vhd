@@ -102,7 +102,7 @@ begin
     LOG_INS(16) <= faults_valid AND (NOT(INS(4)) OR NOT(INS(8))); -- M2 & M3 motors combined fault signal, fault when high
     LOG_INS(20 downto 17) <= NOT(lim_deb(3 downto 0));
     LOG_INS(23 downto 21) <= INS(23 downto 21); -- Generic outputs not touched
-	LOG_INS(24) <= el_probe_deb;
+	LOG_INS(24) <= el_probe_cs;
 	LOG_INS(26) <= sw_probe_deb;
     LOG_INS(25) <= NOT(aux1_in_deb);  -- AUXIN1 gets debounced, and inverted
     LOG_INS(27) <= NOT(INS(27));  -- E-Stop input is not debounced, but inverted
