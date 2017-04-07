@@ -1,16 +1,16 @@
--- A simple test bench for the ioexp controller
+-- A simple test bench for the btint controller
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity jd2_ioexp_controller_tb is
+entity btint_controller_tb is
     generic (
         BAUD_TIMER_WIDTH : natural := 16;
         PP_BUF_ADDR_WIDTH : natural := 6
     );
 end entity;
 
-architecture beh of jd2_ioexp_controller_tb is
+architecture beh of btint_controller_tb is
     signal clk : std_logic := '0';
     signal rst_n : std_logic := '1';
     signal uart_busy : std_logic;
@@ -40,7 +40,7 @@ architecture beh of jd2_ioexp_controller_tb is
     constant clockperiod : TIME := 10 ns;
     constant syncperiod : TIME := 1 ms;
 begin
-    UUT : entity work.jd2_ioexp_controller
+    UUT : entity work.btint_controller
         generic map(
             PP_BUF_ADDR_WIDTH => PP_BUF_ADDR_WIDTH
         )

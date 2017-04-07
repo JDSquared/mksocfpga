@@ -3,9 +3,13 @@
 -- escapes data for line transmission
 -- This could be done with a FIFO, but
 -- since the relevant packets for btint
--- coms are never longer than 4 bytes
--- just use a 32 bit value latched at
+-- coms are never longer than 6 bytes
+-- just use a 48 bit value latched at
 -- we.
+-- A packet must be 
+-- packet_length = 0(0b01) - 2 bytes
+-- packet_length = 1(0b01) - 4 bytes
+-- packet_length = 2(0b10) - 6 bytes
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -21,7 +25,8 @@ entity pkt_builder_tx is
 	(
 	    rst_n   : in std_logic;
         clk     : in std_logic;
-        packet  : in std_logic_vector(31 downto 0); -- Only support 32 bit packet contents
+        packet  : in std_logic_vector(47 downto 0); -- Only support 48-bit max packet contents
+		packet_length: in std_logic_vector(1 downto 0); -- The length of the packet being latched, see table
         we      : in std_logic; -- Assert to latch packet and begin transmission
         busy    : out std_logic;
         uart_data : out std_logic_vector(7 downto 0);
@@ -33,7 +38,8 @@ end entity;
 architecture beh of pkt_builder_tx is
 	type sm_type is (idle, start_flag, send_data, send_esc_flag, send_esc_data, chk_burn, stop_flag);
 	signal current_state, next_state : sm_type;
-    signal pkt_reg : std_logic_vector(31 downto 0) := (others => '0');
+    signal pkt_reg : std_logic_vector(47 downto 0) := (others => '0');
+	signal pkt_len_reg: std_logic_vector(1 downto 0) := (others => '0');
     signal chksum1 : std_logic_vector(7 downto 0) := (others => '0');
     signal chksum1_add : unsigned(15 downto 0) := (others => '0');
     signal chksum1_mod : std_logic_vector(7 downto 0) := (others => '0');
@@ -41,7 +47,7 @@ architecture beh of pkt_builder_tx is
     signal chksum2_add : unsigned(15 downto 0) := (others => '0');
     signal chksum2_mod : std_logic_vector(7 downto 0) := (others => '0');
     signal busy_s : std_logic := '0';
-    signal byte_cnt : unsigned(2 downto 0) := (others => '0');
+    signal byte_cnt : unsigned(3 downto 0) := (others => '0');
     signal data_byte : std_logic_vector(7 downto 0);
     signal utx_load : std_logic;
 begin
@@ -59,9 +65,11 @@ begin
      begin
          if(rst_n = '0') then
              pkt_reg <= (others => '0');
+			 pkt_len_reg <= (others => '0');
          elsif(rising_edge(clk)) then
              if(busy_s /= '1' and we = '1') then
                  pkt_reg <= packet;
+				 pkt_len_reg <= packet_length;
              end if;
          end if;
      end process;
@@ -84,24 +92,65 @@ begin
         end if;
     end process upd_byte_cnt;
 
-    buf_addr_mux : process(byte_cnt, pkt_reg, chksum1, chksum2)
+    buf_addr_mux : process(byte_cnt, pkt_reg, pkt_len_reg, chksum1, chksum2)
     begin
-        case byte_cnt is
-        when b"000" =>
-            data_byte <= pkt_reg(31 downto 24);
-        when b"001" =>
-            data_byte <= pkt_reg(23 downto 16);
-        when b"010" =>
-            data_byte <= pkt_reg(15 downto 8);
-        when b"011" =>
-            data_byte <= pkt_reg(7 downto 0);
-        when b"100" =>
-            data_byte <= chksum1;
-        when b"101" =>
-            data_byte <= chksum2;
-        when others =>
-            data_byte <= (others => '0');
-        end case;
+		-- 2 byte packet
+		if(pkt_len_reg = b"00") then
+		    case byte_cnt is
+				when b"0000" =>
+				    data_byte <= pkt_reg(15 downto 8);
+				when b"0001" =>
+				    data_byte <= pkt_reg(7 downto 0);
+				when b"0010" =>
+		            data_byte <= chksum1;
+				when b"0011" =>
+            		data_byte <= chksum2;
+				when others =>
+					data_byte <= (others => '0');
+		    end case;
+		-- 4 byte packet
+		elsif(pkt_len_reg = b"01") then
+		    case byte_cnt is
+				when b"0000" =>
+				    data_byte <= pkt_reg(31 downto 24);
+				when b"0001" =>
+				    data_byte <= pkt_reg(23 downto 16);
+				when b"0010" =>
+				    data_byte <= pkt_reg(15 downto 8);
+				when b"0011" =>
+				    data_byte <= pkt_reg(7 downto 0);
+				when b"0100" =>
+		            data_byte <= chksum1;
+				when b"0101" =>
+            		data_byte <= chksum2;
+				when others =>
+					data_byte <= (others => '0');
+		    end case;
+		-- 6 byte packet
+		elsif(pkt_len_reg = b"10") then
+		    case byte_cnt is
+				when b"0000" =>
+				    data_byte <= pkt_reg(47 downto 40);
+				when b"0001" =>
+				    data_byte <= pkt_reg(39 downto 32);
+				when b"0010" =>
+				    data_byte <= pkt_reg(31 downto 24);
+				when b"0011" =>
+				    data_byte <= pkt_reg(23 downto 16);
+				when b"0100" =>
+				    data_byte <= pkt_reg(15 downto 8);
+				when b"0101" =>
+				    data_byte <= pkt_reg(7 downto 0);
+				when b"0110" =>
+		            data_byte <= chksum1;
+				when b"0111" =>
+            		data_byte <= chksum2;
+				when others =>
+					data_byte <= (others => '0');
+		    end case;
+		else
+			data_byte <= (others => '0');
+		end if;
     end process buf_addr_mux;
 
     dataout_calc : process(current_state, data_byte)
@@ -152,9 +201,19 @@ begin
                     chksum1 <= (others => '0');
                     chksum2 <= (others => '0');
                 when send_data | send_esc_data =>
-                    if(utx_load = '1' and byte_cnt <= b"011") then
-                        chksum1 <= chksum1_mod;
-                        chksum2 <= chksum2_mod;
+                    if(utx_load = '1') then
+						if(((pkt_len_reg = b"00") and (byte_cnt <= b"0001")) or
+							((pkt_len_reg = b"01") and (byte_cnt <= b"0011")) or
+							((pkt_len_reg = b"10") and (byte_cnt <= b"0101"))) then
+	                        chksum1 <= chksum1_mod;
+	                        chksum2 <= chksum2_mod;
+						else
+				            chksum1 <= chksum1;
+				            chksum2 <= chksum2;
+						end if;
+					else
+	                    chksum1 <= chksum1;
+                    	chksum2 <= chksum2;
                     end if;
                 when others =>
                     chksum1 <= chksum1;
@@ -172,7 +231,7 @@ begin
         end if;
     end process update_state;
 
-    calc_state : process(current_state, we, uart_busy, byte_cnt, data_byte)
+    calc_state : process(current_state, we, uart_busy, byte_cnt, pkt_len_reg, data_byte)
     begin
         case current_state is
             when idle =>
@@ -190,7 +249,9 @@ begin
             when chk_burn =>
                 next_state <= chk_burn; -- We have to give one clock to allow the checksums to update before
                                           -- deciding where to go next. The byte counter is already updated to the new value
-                if(byte_cnt = b"110") then -- if we are sending the 6th byte (chksum2) we're done
+                if(((pkt_len_reg = b"00") and (byte_cnt = b"0100")) or
+				   ((pkt_len_reg = b"01") and (byte_cnt = b"0110")) or
+				   ((pkt_len_reg = b"10") and (byte_cnt = b"1000"))) then -- if we are sending the last byte (chksum2) we're done
                     next_state <= stop_flag;
                 else
                     if(data_byte = PKT_FLAG or data_byte = PKT_ESC_FLAG or data_byte = PKT_BL_FLAG) then

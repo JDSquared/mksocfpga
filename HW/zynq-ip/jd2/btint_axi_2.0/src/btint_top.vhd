@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity jd2_ioexp_top is
+entity btint_top is
     generic (
         PP_BUF_ADDR_WIDTH : natural := 6;
         BAUD_TIMER_WIDTH : natural := 16;
@@ -15,7 +15,9 @@ entity jd2_ioexp_top is
         rst_n : in std_logic;
         clk : in std_logic;
         uart_tx : out std_logic;
+		uart_tx_en: out std_logic;
         uart_rx : in std_logic;
+		uart_rx_en : out std_logic;
         addr_rd : in std_logic_vector(15 downto 0);
         addr_wr : in std_logic_vector(15 downto 0);
         idata : in std_logic_vector(31 downto 0);
@@ -26,16 +28,17 @@ entity jd2_ioexp_top is
     );
 end entity;
 
-architecture imp of jd2_ioexp_top is
+architecture imp of btint_top is
     -- UART Transmission
     signal utx_busy : std_logic;
     signal utx_data : std_logic_vector(7 downto 0);
     signal utx_load : std_logic := '0';
 
     -- Packet Transmitter
-    signal pkttx_packet : std_logic_vector(31 downto 0);
+    signal pkttx_packet : std_logic_vector(47 downto 0);
     signal pkttx_we : std_logic;
     signal pkttx_busy : std_logic;
+    signal pkttx_length: std_logic_vector(1 downto 0);
 
     -- UART Reception
     signal urx_data : std_logic_vector(7 downto 0);
@@ -60,8 +63,8 @@ architecture imp of jd2_ioexp_top is
     signal odata_ctrl : std_logic_vector(31 downto 0);
     signal cnt_rst_n : std_logic;
 
-    -- Sets up 230400 baud with a 50MHz input clock
-    constant BAUDREG : unsigned(BAUD_TIMER_WIDTH - 1 downto 0) := x"001A";
+    -- Sets up 625000 baud with a 100MHz input clock
+    constant BAUDREG : unsigned(BAUD_TIMER_WIDTH - 1 downto 0) := x"0009";
 begin
   pp_we1 <= '1' when (pp_wr = '1' and pp_lock = '0') else '0';
   pp_we2 <= '1' when (pp_wr = '1' and pp_lock = '1') else '0';
@@ -124,6 +127,7 @@ begin
             rst_n => cnt_rst_n,
             clk => clk,
             packet => pkttx_packet,
+            packet_length => pkttx_length, 
             we => pkttx_we,
             busy => pkttx_busy,
             uart_data => utx_data,
@@ -180,7 +184,7 @@ begin
     -- Top level controller
     -- ------------------------------------------
 
-    jd2_ioexp_control1 : entity work.jd2_ioexp_controller
+    btint_control1 : entity work.btint_controller
         generic map(
             PP_BUF_ADDR_WIDTH => PP_BUF_ADDR_WIDTH
         )
@@ -192,9 +196,13 @@ begin
             pp_addr => pp_rd_addr,
             pp_data1 => pp_rd_data1,
             pp_data2 => pp_rd_data2,
+            pkt_tx_data_len => pkttx_length,
             pkt_tx_data => pkttx_packet,
             pkt_tx_we => pkttx_we,
             pkt_tx_busy => pkttx_busy,
+			uart_tx_busy => utx_busy,
+			uart_tx_en => uart_tx_en,
+			uart_rx_en => uart_rx_en,
             addr_wr => addr_wr,
             idata => idata,
             wr => wr,

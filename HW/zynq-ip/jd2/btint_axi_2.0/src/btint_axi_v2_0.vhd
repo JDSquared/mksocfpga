@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity jd2_ioexp_axi_v1_0 is
+entity btint_axi_v2_0 is
 	generic (
 		-- Width of S_AXI data bus
 		C_S_AXI_DATA_WIDTH	: integer	:= 32;
@@ -74,13 +74,15 @@ entity jd2_ioexp_axi_v1_0 is
 		-- UART IO
 		UART_RX : in std_logic;
 		UART_TX : out std_logic;
+		UART_TX_EN : out std_logic;
+		UART_RX_EN : out std_logic;
 
 		-- Sync input
 		sync : in std_logic
 	);
-end jd2_ioexp_axi_v1_0;
+end btint_axi_v2_0;
 
-architecture arch_imp of jd2_ioexp_axi_v1_0 is
+architecture arch_imp of btint_axi_v2_0 is
 
 	-- AXI4LITE signals
 	signal axi_awaddr	: std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0);
@@ -107,12 +109,14 @@ begin
 	S_AXI_RRESP	<= axi_rresp;
 	S_AXI_RVALID	<= axi_rvalid;
 
-	jd2_ioexp_top1 : entity work.jd2_ioexp_top
+	btint_top1 : entity work.btint_top
         port map(
             rst_n => S_AXI_ARESETN,
             clk => S_AXI_ACLK,
             uart_tx => UART_TX,
+            uart_tx_en => UART_TX_EN,
             uart_rx => UART_RX,
+            uart_rx_en => UART_RX_EN,
             addr_rd => axi_araddr,
             addr_wr => axi_awaddr,
             idata => S_AXI_WDATA,
@@ -194,7 +198,7 @@ begin
 	-- and the slave is ready to accept the write address and write data.
 	slv_reg_wren <= axi_wready and S_AXI_WVALID and axi_awready and S_AXI_AWVALID ;
 
-    -- The actual write is handled inside the jd2_ioexp_top component
+    -- The actual write is handled inside the btint_top component
 
 
 	-- Implement write response logic generation
