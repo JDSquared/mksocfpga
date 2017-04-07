@@ -41,7 +41,7 @@ begin
 	-- Make a big AND gate for the filter
 	filt_j <= red_and(ff_pack);
 	-- and a big BAND gate
-	filt_k <= red_and(not ff_pack);
+	filt_k <= red_and((not ff_pack));
 	
 	-- Outputs 
 	output <= filt_q;
