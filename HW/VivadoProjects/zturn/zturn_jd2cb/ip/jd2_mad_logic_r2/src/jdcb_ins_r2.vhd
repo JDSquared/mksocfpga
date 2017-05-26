@@ -88,6 +88,8 @@ architecture arch_imp of jdcb_ins_r2 is
 	signal probe_deb : std_logic_vector(2 downto 0);
 	signal eprobe: std_logic := '0';
 
+	signal tbreak: std_logic := '0';
+
 	signal arcok: std_logic := '0';
 
     signal motor_fb_valid : std_logic;    -- When motors are turned off, ignore amp fb
@@ -134,8 +136,10 @@ begin
 	-- E-Stop and Torch Break changed to positive logic
 	--
 	LOG_INS(36 downto 35) <= NOT(INS(36 downto 35));
-	LOG_INS(64) <= NOT(INS(35)) OR (NOT(INS(36)) AND NOT(INS(63)));  -- Logical E-Stop
+	tbreak <= NOT(INS(36)) AND NOT(INS(63)) AND NOT(INS(70)); -- Two override sources for tbreak
+	LOG_INS(64) <= NOT(INS(35)) OR tbreak;  -- Logical E-Stop
 	LOG_INS(63) <= INS(63);
+	LOG_INS(70) <= INS(70);
 
 	--
 	-- ARC Okay input is filtered.
@@ -216,7 +220,7 @@ begin
 	LOG_INS(47) <= INS(47);
 
 	-- Extra control signals 71 downto 68
-	LOG_INS(70 downto 68) <= INS(70 downto 68);
+	LOG_INS(69 downto 68) <= INS(69 downto 68);
 	LOG_INS(71) <= INS(71) AND INS(66) AND INS(65) AND INS(64);
 
 	-- 
